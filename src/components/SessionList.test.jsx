@@ -44,27 +44,27 @@ describe('SessionList', () => {
     </BrowserRouter>
   );
 
+  const simulateFileUpload = (content) => {
+    const file = new File([JSON.stringify(content)], 'sessions.json', { type: 'application/json' });
+    const fileInput = screen.getByLabelText('Import');
+    Object.defineProperty(fileInput, 'files', { value: [file] });
+    fireEvent.change(fileInput);
+  };
+
   test('imports sessions successfully', async () => {
     renderComponent();
     
     const importButton = screen.getByText('Import Sessions');
     fireEvent.click(importButton);
     
-    const confirmImportButton = screen.getByText('Import');
-    
-    const validSessionsJson = JSON.stringify([
+    const validSessions = [
       { id: 1, name: 'Test Session 1', date: '2023-01-01T00:00:00.000Z', notes: [] },
       { id: 2, name: 'Test Session 2', date: '2023-01-02T00:00:00.000Z', notes: [] }
-    ]);
+    ];
     
-    const file = new File([validSessionsJson], 'sessions.json', { type: 'application/json' });
-    const fileInput = screen.getByLabelText('Import');
+    simulateFileUpload(validSessions);
     
-    Object.defineProperty(fileInput, 'files', {
-      value: [file]
-    });
-    
-    fireEvent.change(fileInput);
+    const confirmImportButton = screen.getByText('Import');
     fireEvent.click(confirmImportButton);
     
     await waitFor(() => {
@@ -80,18 +80,11 @@ describe('SessionList', () => {
     const importButton = screen.getByText('Import Sessions');
     fireEvent.click(importButton);
     
-    const confirmImportButton = screen.getByText('Import');
-    
     const invalidJson = 'invalid json data';
     
-    const file = new File([invalidJson], 'invalid.json', { type: 'application/json' });
-    const fileInput = screen.getByLabelText('Import');
+    simulateFileUpload(invalidJson);
     
-    Object.defineProperty(fileInput, 'files', {
-      value: [file]
-    });
-    
-    fireEvent.change(fileInput);
+    const confirmImportButton = screen.getByText('Import');
     fireEvent.click(confirmImportButton);
     
     await waitFor(() => {
@@ -105,18 +98,11 @@ describe('SessionList', () => {
     const importButton = screen.getByText('Import Sessions');
     fireEvent.click(importButton);
     
+    const nonArrayJson = { notAnArray: true };
+    
+    simulateFileUpload(nonArrayJson);
+    
     const confirmImportButton = screen.getByText('Import');
-    
-    const nonArrayJson = JSON.stringify({ notAnArray: true });
-    
-    const file = new File([nonArrayJson], 'non-array.json', { type: 'application/json' });
-    const fileInput = screen.getByLabelText('Import');
-    
-    Object.defineProperty(fileInput, 'files', {
-      value: [file]
-    });
-    
-    fireEvent.change(fileInput);
     fireEvent.click(confirmImportButton);
     
     await waitFor(() => {
@@ -124,5 +110,108 @@ describe('SessionList', () => {
     });
   });
 
-  // Add more tests as needed
+  test('imports sessions with notes successfully', async () => {
+    renderComponent();
+    
+    const importButton = screen.getByText('Import Sessions');
+    fireEvent.click(importButton);
+    
+    const validSessionsWithNotes = [
+      {
+        id: 1725060219774,
+        name: "Test Session",
+        notes: [
+          {
+            type: "Note",
+            content: "Test note content",
+            app: "None",
+            os: "None",
+            env: "None",
+            id: 1725060217087
+          }
+        ],
+        date: "2024-08-30T23:23:39.774Z",
+        duration: 0
+      }
+    ];
+    
+    simulateFileUpload(validSessionsWithNotes);
+    
+    const confirmImportButton = screen.getByText('Import');
+    fireEvent.click(confirmImportButton);
+    
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('1 sessions imported successfully');
+      expect(screen.getByText('Test Session')).toBeInTheDocument();
+    });
+  });
+
+  test('handles import of multiple sessions with various structures', async () => {
+    renderComponent();
+    
+    const importButton = screen.getByText('Import Sessions');
+    fireEvent.click(importButton);
+    
+    const mixedSessions = [
+      {
+        id: 1,
+        name: "Session 1",
+        notes: [],
+        date: "2024-01-01T00:00:00.000Z",
+        duration: 0
+      },
+      {
+        id: 2,
+        name: "Session 2",
+        notes: [
+          {
+            type: "Note",
+            content: "Note in session 2",
+            app: "UCL",
+            os: "Android",
+            env: "PROD",
+            id: 1000
+          }
+        ],
+        date: "2024-01-02T00:00:00.000Z",
+        duration: 300
+      },
+      {
+        id: 3,
+        name: "Session 3",
+        notes: [
+          {
+            type: "Failed",
+            content: "Failed test in session 3",
+            app: "None",
+            os: "None",
+            env: "None",
+            id: 2000
+          },
+          {
+            type: "Retest",
+            content: "Retest in session 3",
+            app: "UEL",
+            os: "iOS",
+            env: "INT",
+            id: 3000
+          }
+        ],
+        date: "2024-01-03T00:00:00.000Z",
+        duration: 600
+      }
+    ];
+    
+    simulateFileUpload(mixedSessions);
+    
+    const confirmImportButton = screen.getByText('Import');
+    fireEvent.click(confirmImportButton);
+    
+    await waitFor(() => {
+      expect(toast.success).toHaveBeenCalledWith('3 sessions imported successfully');
+      expect(screen.getByText('Session 1')).toBeInTheDocument();
+      expect(screen.getByText('Session 2')).toBeInTheDocument();
+      expect(screen.getByText('Session 3')).toBeInTheDocument();
+    });
+  });
 });

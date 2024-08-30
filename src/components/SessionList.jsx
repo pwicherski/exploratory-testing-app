@@ -55,8 +55,12 @@ const SessionList = () => {
               ...prevSessions,
               ...importedSessions.map(session => ({
                 ...session,
-                id: Date.now() + Math.random(), // Ensure unique IDs
-                date: new Date(session.date).toISOString() // Ensure valid date
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique string IDs
+                date: new Date(session.date).toISOString(), // Ensure valid date
+                notes: session.notes.map(note => ({
+                  ...note,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}` // Ensure unique string IDs for notes
+                }))
               }))
             ];
             localStorage.setItem('sessions', JSON.stringify(updatedSessions));
