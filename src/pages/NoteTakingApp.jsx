@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,56 +7,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-// Mock data storage
-let mockNotes = [];
-let mockSessions = [];
-
 const NoteTakingApp = () => {
   const [sessionName, setSessionName] = useState('');
+  const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState({ type: 'Note', content: '' });
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const { data: notes = [], isLoading } = useQuery({
-    queryKey: ['notes'],
-    queryFn: fetchNotes,
-    initialData: [],
-  });
-
-  const addNoteMutation = useMutation({
-    mutationFn: addNote,
-    onSuccess: (addedNote) => {
-      queryClient.setQueryData(['notes'], (oldNotes) => [...oldNotes, addedNote]);
-      setNewNote({ type: 'Note', content: '' });
-      toast.success("Note added successfully");
-    },
-  });
-
-  const saveSessionMutation = useMutation({
-    mutationFn: async (sessionData) => {
-      const response = await fetch('/api/save-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(sessionData),
-      });
-      if (!response.ok) {
-        throw new Error('Failed to save session');
+  useEffect(() => {
+    const sessionId = new URLSearchParams(location.search).get('sessionId');
+    if (sessionId) {
+      const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+      const session = sessions.find(s => s.id === parseInt(sessionId));
+      if (session) {
+        setSessionName(session.name);
+        setNotes(session.notes);
       }
-      return response.json();
-    },
-    onSuccess: () => {
-      toast.success("Session saved successfully");
-      queryClient.invalidateQueries(['sessions']);
-    },
-    onError: (error) => {
-      toast.error(`Error saving session: ${error.message}`);
-    },
-  });
+    }
+  }, [location]);
 
   const handleAddNote = () => {
     if (newNote.content.trim()) {
-      addNoteMutation.mutate(newNote);
+      const updatedNotes = [...notes, { ...newNote, id: Date.now() }];
+      setNotes(updatedNotes);
+      setNewNote({ type: 'Note', content: '' });
+      toast.success("Note added successfully");
     } else {
       toast.error("Note content cannot be empty");
     }
@@ -68,13 +43,24 @@ const NoteTakingApp = () => {
 
   const handleSaveSession = () => {
     if (sessionName.trim()) {
-      saveSessionMutation.mutate({ name: sessionName, notes });
+      const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+      const newSession = {
+        id: Date.now(),
+        name: sessionName,
+        notes: notes,
+        date: new Date().toISOString()
+      };
+      localStorage.setItem('sessions', JSON.stringify([...sessions, newSession]));
+      toast.success("Session saved successfully");
+      navigate('/');
     } else {
       toast.error("Session name cannot be empty");
     }
   };
 
-  if (isLoading) return <div>Loading...</div>;
+  const handleClose = () => {
+    navigate('/');
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -91,8 +77,7 @@ const NoteTakingApp = () => {
           </Button>
         </div>
         <div>
-          <Button variant="outline">Close</Button>
-          <Button variant="outline" className="ml-2">Edit</Button>
+          <Button variant="outline" onClick={handleClose}>Close</Button>
         </div>
       </div>
 
@@ -129,8 +114,8 @@ const NoteTakingApp = () => {
           </div>
 
           <div className="space-y-4">
-            {notes.map((note, index) => (
-              <Card key={index}>
+            {notes.map((note) => (
+              <Card key={note.id}>
                 <CardContent className="flex items-start space-x-4 p-4">
                   <div className={`w-4 h-4 rounded-full ${getColorForNoteType(note.type)}`} />
                   <div>
@@ -154,23 +139,6 @@ const getColorForNoteType = (type) => {
     case 'Question': return 'bg-blue-500';
     default: return 'bg-green-500';
   }
-};
-
-// Mock backend functions
-const fetchNotes = async () => {
-  return mockNotes;
-};
-
-const addNote = async (note) => {
-  const newNote = { ...note, id: Date.now() };
-  mockNotes.push(newNote);
-  return newNote;
-};
-
-const saveSession = async ({ name, notes }) => {
-  const session = { id: Date.now(), name, notes };
-  mockSessions.push(session);
-  return session;
 };
 
 export default NoteTakingApp;

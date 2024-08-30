@@ -1,23 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
-const fetchSessions = async () => {
-  // TODO: Implement actual API call to Google Sheets
-  const response = await fetch('/api/sessions');
-  if (!response.ok) {
-    throw new Error('Failed to fetch sessions');
-  }
-  return response.json();
-};
-
 const SessionList = () => {
   const navigate = useNavigate();
-  const { data: sessions, isLoading, error } = useQuery({
-    queryKey: ["sessions"],
-    queryFn: fetchSessions,
-  });
+  const [sessions, setSessions] = useState([]);
+
+  useEffect(() => {
+    const storedSessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+    setSessions(storedSessions);
+  }, []);
 
   const handleNewSession = () => {
     navigate("/notes");
@@ -26,9 +19,6 @@ const SessionList = () => {
   const handleOpenSession = (sessionId) => {
     navigate(`/notes?sessionId=${sessionId}`);
   };
-
-  if (isLoading) return <div>Loading sessions...</div>;
-  if (error) return <div>Error loading sessions: {error.message}</div>;
 
   return (
     <div className="container mx-auto p-4">
@@ -44,7 +34,7 @@ const SessionList = () => {
             </CardHeader>
             <CardContent>
               <p>Date: {new Date(session.date).toLocaleDateString()}</p>
-              <p>Notes: {session.noteCount}</p>
+              <p>Notes: {session.notes.length}</p>
             </CardContent>
           </Card>
         ))}
