@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 const NoteTakingApp = () => {
   const [sessionName, setSessionName] = useState('');
   const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState({ type: 'Note', content: '', app: 'UCL', os: 'Android', env: 'PROD' });
+  const [newNote, setNewNote] = useState({ type: 'Note', content: '', app: 'None', os: 'None', env: 'None' });
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const navigate = useNavigate();
@@ -147,6 +147,7 @@ const NoteTakingApp = () => {
                   <SelectValue placeholder="App" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="None">None</SelectItem>
                   <SelectItem value="UCL">UCL</SelectItem>
                   <SelectItem value="UEL">UEL</SelectItem>
                   <SelectItem value="UECL">UECL</SelectItem>
@@ -163,6 +164,7 @@ const NoteTakingApp = () => {
                   <SelectValue placeholder="OS" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="None">None</SelectItem>
                   <SelectItem value="Android">Android</SelectItem>
                   <SelectItem value="iOS">iOS</SelectItem>
                 </SelectContent>
@@ -175,6 +177,7 @@ const NoteTakingApp = () => {
                   <SelectValue placeholder="Environment" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="None">None</SelectItem>
                   <SelectItem value="PROD">PROD</SelectItem>
                   <SelectItem value="PRE">PRE</SelectItem>
                   <SelectItem value="INT">INT</SelectItem>

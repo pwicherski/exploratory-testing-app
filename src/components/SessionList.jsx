@@ -47,11 +47,15 @@ const SessionList = () => {
       reader.onload = (e) => {
         try {
           const importedSessions = JSON.parse(e.target.result);
-          setSessions(prevSessions => [...prevSessions, ...importedSessions]);
-          localStorage.setItem('sessions', JSON.stringify([...sessions, ...importedSessions]));
+          setSessions(prevSessions => {
+            const updatedSessions = [...prevSessions, ...importedSessions];
+            localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+            return updatedSessions;
+          });
           toast.success("Sessions imported successfully");
         } catch (error) {
-          toast.error("Error importing sessions");
+          console.error("Import error:", error);
+          toast.error("Error importing sessions: " + error.message);
         }
       };
       reader.readAsText(file);
