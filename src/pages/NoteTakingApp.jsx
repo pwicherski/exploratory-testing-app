@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+
+// Mock data storage
+let mockNotes = [];
+let mockSessions = [];
 
 const NoteTakingApp = () => {
   const [sessionName, setSessionName] = useState('');
@@ -14,22 +19,44 @@ const NoteTakingApp = () => {
   const { data: notes = [], isLoading } = useQuery({
     queryKey: ['notes'],
     queryFn: fetchNotes,
+    initialData: [],
   });
 
   const addNoteMutation = useMutation({
     mutationFn: addNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries(['notes']);
+    onSuccess: (addedNote) => {
+      queryClient.setQueryData(['notes'], (oldNotes) => [...oldNotes, addedNote]);
       setNewNote({ type: 'Note', content: '' });
+      toast.success("Note added successfully");
     },
   });
 
   const saveSessionMutation = useMutation({
     mutationFn: saveSession,
     onSuccess: () => {
-      // Handle successful save
+      toast.success("Session saved successfully");
     },
   });
+
+  const handleAddNote = () => {
+    if (newNote.content.trim()) {
+      addNoteMutation.mutate(newNote);
+    } else {
+      toast.error("Note content cannot be empty");
+    }
+  };
+
+  const handleClearNote = () => {
+    setNewNote({ type: 'Note', content: '' });
+  };
+
+  const handleSaveSession = () => {
+    if (sessionName.trim()) {
+      saveSessionMutation.mutate({ name: sessionName, notes });
+    } else {
+      toast.error("Session name cannot be empty");
+    }
+  };
 
   if (isLoading) return <div>Loading...</div>;
 
@@ -43,7 +70,7 @@ const NoteTakingApp = () => {
             placeholder="Test session name"
             className="w-64"
           />
-          <Button onClick={() => saveSessionMutation.mutate({ name: sessionName, notes })}>
+          <Button onClick={handleSaveSession}>
             Save Session
           </Button>
         </div>
@@ -80,8 +107,8 @@ const NoteTakingApp = () => {
                   <SelectItem value="Question">Question</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={() => addNoteMutation.mutate(newNote)}>Add</Button>
-              <Button variant="outline">Clear</Button>
+              <Button onClick={handleAddNote}>Add</Button>
+              <Button variant="outline" onClick={handleClearNote}>Clear</Button>
             </div>
           </div>
 
@@ -113,18 +140,21 @@ const getColorForNoteType = (type) => {
   }
 };
 
-// These functions would need to be implemented to interact with your backend
+// Mock backend functions
 const fetchNotes = async () => {
-  // Fetch notes from the backend
-  return [];
+  return mockNotes;
 };
 
 const addNote = async (note) => {
-  // Add a note to the backend
+  const newNote = { ...note, id: Date.now() };
+  mockNotes.push(newNote);
+  return newNote;
 };
 
 const saveSession = async ({ name, notes }) => {
-  // Save the session to the backend
+  const session = { id: Date.now(), name, notes };
+  mockSessions.push(session);
+  return session;
 };
 
 export default NoteTakingApp;
