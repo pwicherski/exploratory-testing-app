@@ -5,15 +5,16 @@ import { useNavigate } from "react-router-dom";
 
 const fetchSessions = async () => {
   // TODO: Implement actual API call to Google Sheets
-  return [
-    { id: 1, name: "Session 1", date: "2024-03-15" },
-    { id: 2, name: "Session 2", date: "2024-03-16" },
-  ];
+  const response = await fetch('/api/sessions');
+  if (!response.ok) {
+    throw new Error('Failed to fetch sessions');
+  }
+  return response.json();
 };
 
 const SessionList = () => {
   const navigate = useNavigate();
-  const { data: sessions, isLoading } = useQuery({
+  const { data: sessions, isLoading, error } = useQuery({
     queryKey: ["sessions"],
     queryFn: fetchSessions,
   });
@@ -23,11 +24,11 @@ const SessionList = () => {
   };
 
   const handleOpenSession = (sessionId) => {
-    // TODO: Implement opening a specific session
-    console.log(`Opening session ${sessionId}`);
+    navigate(`/notes?sessionId=${sessionId}`);
   };
 
   if (isLoading) return <div>Loading sessions...</div>;
+  if (error) return <div>Error loading sessions: {error.message}</div>;
 
   return (
     <div className="container mx-auto p-4">
@@ -42,7 +43,8 @@ const SessionList = () => {
               <CardTitle>{session.name}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Date: {session.date}</p>
+              <p>Date: {new Date(session.date).toLocaleDateString()}</p>
+              <p>Notes: {session.noteCount}</p>
             </CardContent>
           </Card>
         ))}

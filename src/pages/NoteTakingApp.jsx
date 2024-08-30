@@ -32,9 +32,25 @@ const NoteTakingApp = () => {
   });
 
   const saveSessionMutation = useMutation({
-    mutationFn: saveSession,
+    mutationFn: async (sessionData) => {
+      const response = await fetch('/api/save-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sessionData),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save session');
+      }
+      return response.json();
+    },
     onSuccess: () => {
       toast.success("Session saved successfully");
+      queryClient.invalidateQueries(['sessions']);
+    },
+    onError: (error) => {
+      toast.error(`Error saving session: ${error.message}`);
     },
   });
 
