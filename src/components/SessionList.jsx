@@ -47,12 +47,22 @@ const SessionList = () => {
       reader.onload = (e) => {
         try {
           const importedSessions = JSON.parse(e.target.result);
+          if (!Array.isArray(importedSessions)) {
+            throw new Error("Invalid import format");
+          }
           setSessions(prevSessions => {
-            const updatedSessions = [...prevSessions, ...importedSessions];
+            const updatedSessions = [
+              ...prevSessions,
+              ...importedSessions.map(session => ({
+                ...session,
+                id: Date.now() + Math.random(), // Ensure unique IDs
+                date: new Date(session.date).toISOString() // Ensure valid date
+              }))
+            ];
             localStorage.setItem('sessions', JSON.stringify(updatedSessions));
             return updatedSessions;
           });
-          toast.success("Sessions imported successfully");
+          toast.success(`${importedSessions.length} sessions imported successfully`);
         } catch (error) {
           console.error("Import error:", error);
           toast.error("Error importing sessions: " + error.message);
