@@ -15,18 +15,23 @@ const NoteTakingApp = () => {
   const [newNote, setNewNote] = useState({ type: 'Note', content: '', app: 'None', os: 'None', env: 'None' });
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const sessionId = new URLSearchParams(location.search).get('sessionId');
-    if (sessionId) {
+    const urlSessionId = new URLSearchParams(location.search).get('sessionId');
+    if (urlSessionId) {
       const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
-      const session = sessions.find(s => s.id === parseInt(sessionId));
+      const session = sessions.find(s => s.id === parseInt(urlSessionId));
       if (session) {
+        setSessionId(session.id);
         setSessionName(session.name);
         setNotes(session.notes);
+        setTimer(session.duration || 0);
       }
+    } else {
+      setSessionId(Date.now());
     }
   }, [location]);
 
@@ -40,12 +45,38 @@ const NoteTakingApp = () => {
     return () => clearInterval(interval);
   }, [isTimerRunning]);
 
+  const saveSession = useCallback(() => {
+    if (sessionName.trim()) {
+      const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
+      const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+      const updatedSession = {
+        id: sessionId,
+        name: sessionName,
+        notes: notes,
+        date: new Date().toISOString(),
+        duration: timer
+      };
+
+      if (sessionIndex !== -1) {
+        sessions[sessionIndex] = updatedSession;
+      } else {
+        sessions.push(updatedSession);
+      }
+
+      localStorage.setItem('sessions', JSON.stringify(sessions));
+      toast.success("Session saved successfully");
+    } else {
+      toast.error("Session name cannot be empty");
+    }
+  }, [sessionId, sessionName, notes, timer]);
+
   const handleAddNote = () => {
     if (newNote.content.trim()) {
       const updatedNotes = [...notes, { ...newNote, id: Date.now() }];
       setNotes(updatedNotes);
       setNewNote({ ...newNote, content: '' });
-      toast.success("Note added successfully");
+      saveSession();
+      toast.success("Note added and session saved");
     } else {
       toast.error("Note content cannot be empty");
     }
@@ -56,29 +87,21 @@ const NoteTakingApp = () => {
   };
 
   const handleDeleteNote = useCallback((noteId) => {
-    setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId));
-    toast.success("Note deleted successfully");
-  }, []);
+    setNotes(prevNotes => {
+      const updatedNotes = prevNotes.filter(note => note.id !== noteId);
+      saveSession();
+      return updatedNotes;
+    });
+    toast.success("Note deleted and session saved");
+  }, [saveSession]);
 
   const handleSaveSession = () => {
-    if (sessionName.trim()) {
-      const sessions = JSON.parse(localStorage.getItem('sessions') || '[]');
-      const newSession = {
-        id: Date.now(),
-        name: sessionName,
-        notes: notes,
-        date: new Date().toISOString(),
-        duration: timer
-      };
-      localStorage.setItem('sessions', JSON.stringify([...sessions, newSession]));
-      toast.success("Session saved successfully");
-      navigate('/');
-    } else {
-      toast.error("Session name cannot be empty");
-    }
+    saveSession();
+    navigate('/');
   };
 
   const handleClose = () => {
+    saveSession();
     navigate('/');
   };
 
