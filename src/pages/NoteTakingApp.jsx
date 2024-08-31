@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { jsPDF } from 'jspdf';
 
 const NoteTakingApp = () => {
   const [sessionName, setSessionName] = useState('');
@@ -88,6 +89,49 @@ const NoteTakingApp = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const handleExportPDF = () => {
+    const doc = new jsPDF();
+    let yOffset = 10;
+
+    // Add session name and duration
+    doc.setFontSize(16);
+    doc.text(`Session: ${sessionName}`, 10, yOffset);
+    yOffset += 10;
+    doc.setFontSize(12);
+    doc.text(`Duration: ${formatTime(timer)}`, 10, yOffset);
+    yOffset += 10;
+
+    // Add notes
+    doc.setFontSize(14);
+    doc.text('Notes:', 10, yOffset);
+    yOffset += 10;
+
+    notes.forEach((note, index) => {
+      if (yOffset > 280) {
+        doc.addPage();
+        yOffset = 10;
+      }
+
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`${index + 1}. ${note.type}`, 10, yOffset);
+      yOffset += 5;
+
+      doc.setFontSize(10);
+      const splitContent = doc.splitTextToSize(note.content, 180);
+      doc.text(splitContent, 15, yOffset);
+      yOffset += splitContent.length * 5 + 5;
+
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`App: ${note.app} | OS: ${note.os} | Env: ${note.env}`, 15, yOffset);
+      yOffset += 10;
+    });
+
+    doc.save(`${sessionName}_export.pdf`);
+    toast.success("Session exported as PDF");
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
@@ -100,6 +144,9 @@ const NoteTakingApp = () => {
           />
           <Button onClick={handleSaveSession}>
             Save Session
+          </Button>
+          <Button onClick={handleExportPDF}>
+            Export PDF
           </Button>
         </div>
         <div className="flex items-center space-x-2">
