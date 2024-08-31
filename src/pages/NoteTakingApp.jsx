@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,11 +54,10 @@ const NoteTakingApp = () => {
     setNewNote({ ...newNote, content: '' });
   };
 
-  const handleDeleteNote = (noteId) => {
-    const updatedNotes = notes.filter(note => note.id !== noteId);
-    setNotes(updatedNotes);
+  const handleDeleteNote = useCallback((noteId) => {
+    setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId));
     toast.success("Note deleted successfully");
-  };
+  }, []);
 
   const handleSaveSession = () => {
     if (sessionName.trim()) {
