@@ -101,12 +101,12 @@ const NoteTakingApp = () => {
     doc.text(`Duration: ${formatTime(timer)}`, 10, yOffset);
     yOffset += 10;
 
-    // Add notes
+    // Add all entries
     doc.setFontSize(14);
-    doc.text('Notes:', 10, yOffset);
+    doc.text('Entries:', 10, yOffset);
     yOffset += 10;
 
-    notes.forEach((note, index) => {
+    notes.forEach((entry, index) => {
       if (yOffset > 280) {
         doc.addPage();
         yOffset = 10;
@@ -114,22 +114,22 @@ const NoteTakingApp = () => {
 
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
-      doc.text(`${index + 1}. ${note.type}`, 10, yOffset);
+      doc.text(`${index + 1}. ${entry.type}`, 10, yOffset);
       yOffset += 5;
 
       doc.setFontSize(10);
-      const splitContent = doc.splitTextToSize(note.content, 180);
+      const splitContent = doc.splitTextToSize(entry.content, 180);
       doc.text(splitContent, 15, yOffset);
       yOffset += splitContent.length * 5 + 5;
 
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
-      doc.text(`App: ${note.app} | OS: ${note.os} | Env: ${note.env}`, 15, yOffset);
+      doc.text(`App: ${entry.app} | OS: ${entry.os} | Env: ${entry.env}`, 15, yOffset);
       yOffset += 10;
     });
 
     doc.save(`${sessionName}_export.pdf`);
-    toast.success("Session exported as PDF");
+    toast.success("Session exported as PDF with all entries");
   };
 
   return (

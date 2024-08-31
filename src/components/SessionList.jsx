@@ -88,16 +88,20 @@ const SessionList = () => {
             ...session,
             id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             date: new Date(session.date).toISOString(),
-            notes: session.notes.map(note => ({
-              ...note,
-              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            notes: session.notes.map(entry => ({
+              ...entry,
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              type: entry.type || 'Note', // Ensure type is set, default to 'Note'
+              app: entry.app || 'None',
+              os: entry.os || 'None',
+              env: entry.env || 'None'
             }))
           }))
         ];
         localStorage.setItem('sessions', JSON.stringify(updatedSessions));
         return updatedSessions;
       });
-      toast.success(`${importedSessions.length} sessions imported successfully`);
+      toast.success(`${importedSessions.length} sessions imported successfully with all entries`);
       handleImportDialogClose();
     } else {
       toast.error("No valid sessions to import");
