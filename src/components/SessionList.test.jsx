@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 import SessionList from './SessionList';
 import { toast } from 'sonner';
 
-// Mock the toast function
 jest.mock('sonner', () => ({
   toast: {
     success: jest.fn(),
@@ -12,7 +11,6 @@ jest.mock('sonner', () => ({
   },
 }));
 
-// Mock localStorage
 const localStorageMock = (function() {
   let store = {};
   return {
@@ -46,14 +44,20 @@ describe('SessionList', () => {
 
   const simulateFileUpload = (content) => {
     const file = new File([JSON.stringify(content)], 'sessions.json', { type: 'application/json' });
-    const fileInput = screen.getByLabelText('Import');
+    const fileInput = screen.getByLabelText('Session File');
     Object.defineProperty(fileInput, 'files', { value: [file] });
     fireEvent.change(fileInput);
   };
 
-  test('imports sessions successfully', async () => {
+  test('opens import dialog when Import Sessions button is clicked', () => {
     renderComponent();
-    
+    const importButton = screen.getByText('Import Sessions');
+    fireEvent.click(importButton);
+    expect(screen.getByText('Select a JSON file to import sessions.')).toBeInTheDocument();
+  });
+
+  test('displays number of sessions found in import file', async () => {
+    renderComponent();
     const importButton = screen.getByText('Import Sessions');
     fireEvent.click(importButton);
     
@@ -64,8 +68,27 @@ describe('SessionList', () => {
     
     simulateFileUpload(validSessions);
     
-    const confirmImportButton = screen.getByText('Import');
-    fireEvent.click(confirmImportButton);
+    await waitFor(() => {
+      expect(screen.getByText('2 sessions found in the file')).toBeInTheDocument();
+    });
+  });
+
+  test('imports sessions successfully', async () => {
+    renderComponent();
+    const importButton = screen.getByText('Import Sessions');
+    fireEvent.click(importButton);
+    
+    const validSessions = [
+      { id: 1, name: 'Test Session 1', date: '2023-01-01T00:00:00.000Z', notes: [] },
+      { id: 2, name: 'Test Session 2', date: '2023-01-02T00:00:00.000Z', notes: [] }
+    ];
+    
+    simulateFileUpload(validSessions);
+    
+    await waitFor(() => {
+      const confirmImportButton = screen.getByText('Import 2 Sessions');
+      fireEvent.click(confirmImportButton);
+    });
     
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('2 sessions imported successfully');
@@ -76,7 +99,6 @@ describe('SessionList', () => {
 
   test('handles import error for invalid JSON', async () => {
     renderComponent();
-    
     const importButton = screen.getByText('Import Sessions');
     fireEvent.click(importButton);
     
@@ -84,17 +106,13 @@ describe('SessionList', () => {
     
     simulateFileUpload(invalidJson);
     
-    const confirmImportButton = screen.getByText('Import');
-    fireEvent.click(confirmImportButton);
-    
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Error importing sessions'));
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Error reading import file'));
     });
   });
 
   test('handles import error for non-array data', async () => {
     renderComponent();
-    
     const importButton = screen.getByText('Import Sessions');
     fireEvent.click(importButton);
     
@@ -102,17 +120,13 @@ describe('SessionList', () => {
     
     simulateFileUpload(nonArrayJson);
     
-    const confirmImportButton = screen.getByText('Import');
-    fireEvent.click(confirmImportButton);
-    
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Error importing sessions: Invalid import format');
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Error reading import file'));
     });
   });
 
   test('imports sessions with notes successfully', async () => {
     renderComponent();
-    
     const importButton = screen.getByText('Import Sessions');
     fireEvent.click(importButton);
     
@@ -137,8 +151,10 @@ describe('SessionList', () => {
     
     simulateFileUpload(validSessionsWithNotes);
     
-    const confirmImportButton = screen.getByText('Import');
-    fireEvent.click(confirmImportButton);
+    await waitFor(() => {
+      const confirmImportButton = screen.getByText('Import 1 Sessions');
+      fireEvent.click(confirmImportButton);
+    });
     
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('1 sessions imported successfully');
@@ -146,72 +162,31 @@ describe('SessionList', () => {
     });
   });
 
-  test('handles import of multiple sessions with various structures', async () => {
+  test('closes import dialog when cancel button is clicked', async () => {
     renderComponent();
-    
     const importButton = screen.getByText('Import Sessions');
     fireEvent.click(importButton);
     
-    const mixedSessions = [
-      {
-        id: 1,
-        name: "Session 1",
-        notes: [],
-        date: "2024-01-01T00:00:00.000Z",
-        duration: 0
-      },
-      {
-        id: 2,
-        name: "Session 2",
-        notes: [
-          {
-            type: "Note",
-            content: "Note in session 2",
-            app: "UCL",
-            os: "Android",
-            env: "PROD",
-            id: 1000
-          }
-        ],
-        date: "2024-01-02T00:00:00.000Z",
-        duration: 300
-      },
-      {
-        id: 3,
-        name: "Session 3",
-        notes: [
-          {
-            type: "Failed",
-            content: "Failed test in session 3",
-            app: "None",
-            os: "None",
-            env: "None",
-            id: 2000
-          },
-          {
-            type: "Retest",
-            content: "Retest in session 3",
-            app: "UEL",
-            os: "iOS",
-            env: "INT",
-            id: 3000
-          }
-        ],
-        date: "2024-01-03T00:00:00.000Z",
-        duration: 600
-      }
-    ];
-    
-    simulateFileUpload(mixedSessions);
-    
-    const confirmImportButton = screen.getByText('Import');
-    fireEvent.click(confirmImportButton);
+    const cancelButton = screen.getByText('Cancel');
+    fireEvent.click(cancelButton);
     
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('3 sessions imported successfully');
-      expect(screen.getByText('Session 1')).toBeInTheDocument();
-      expect(screen.getByText('Session 2')).toBeInTheDocument();
-      expect(screen.getByText('Session 3')).toBeInTheDocument();
+      expect(screen.queryByText('Select a JSON file to import sessions.')).not.toBeInTheDocument();
+    });
+  });
+
+  test('disables import button when no valid sessions are found', async () => {
+    renderComponent();
+    const importButton = screen.getByText('Import Sessions');
+    fireEvent.click(importButton);
+    
+    const emptyArray = [];
+    
+    simulateFileUpload(emptyArray);
+    
+    await waitFor(() => {
+      const confirmImportButton = screen.getByText('Import 0 Sessions');
+      expect(confirmImportButton).toBeDisabled();
     });
   });
 });

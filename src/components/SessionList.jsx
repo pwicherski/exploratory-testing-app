@@ -4,10 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { useNavigate } from "react-router-dom";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const SessionList = () => {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importedSessions, setImportedSessions] = useState([]);
 
   useEffect(() => {
     const storedSessions = JSON.parse(localStorage.getItem('sessions') || '[]');
@@ -40,39 +46,61 @@ const SessionList = () => {
     toast.success("Sessions exported successfully");
   };
 
-  const handleImportSessions = (event) => {
+  const handleImportDialogOpen = () => {
+    setIsImportDialogOpen(true);
+  };
+
+  const handleImportDialogClose = () => {
+    setIsImportDialogOpen(false);
+    setImportFile(null);
+    setImportedSessions([]);
+  };
+
+  const handleFileSelect = (event) => {
     const file = event.target.files[0];
+    setImportFile(file);
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const importedSessions = JSON.parse(e.target.result);
-          if (!Array.isArray(importedSessions)) {
+          const importedData = JSON.parse(e.target.result);
+          if (!Array.isArray(importedData)) {
             throw new Error("Invalid import format");
           }
-          setSessions(prevSessions => {
-            const updatedSessions = [
-              ...prevSessions,
-              ...importedSessions.map(session => ({
-                ...session,
-                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Ensure unique string IDs
-                date: new Date(session.date).toISOString(), // Ensure valid date
-                notes: session.notes.map(note => ({
-                  ...note,
-                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}` // Ensure unique string IDs for notes
-                }))
-              }))
-            ];
-            localStorage.setItem('sessions', JSON.stringify(updatedSessions));
-            return updatedSessions;
-          });
-          toast.success(`${importedSessions.length} sessions imported successfully`);
+          setImportedSessions(importedData);
         } catch (error) {
           console.error("Import error:", error);
-          toast.error("Error importing sessions: " + error.message);
+          toast.error("Error reading import file: " + error.message);
+          setImportFile(null);
+          setImportedSessions([]);
         }
       };
       reader.readAsText(file);
+    }
+  };
+
+  const handleImportConfirm = () => {
+    if (importedSessions.length > 0) {
+      setSessions(prevSessions => {
+        const updatedSessions = [
+          ...prevSessions,
+          ...importedSessions.map(session => ({
+            ...session,
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            date: new Date(session.date).toISOString(),
+            notes: session.notes.map(note => ({
+              ...note,
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            }))
+          }))
+        ];
+        localStorage.setItem('sessions', JSON.stringify(updatedSessions));
+        return updatedSessions;
+      });
+      toast.success(`${importedSessions.length} sessions imported successfully`);
+      handleImportDialogClose();
+    } else {
+      toast.error("No valid sessions to import");
     }
   };
 
@@ -98,33 +126,7 @@ const SessionList = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline">Import Sessions</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Import Sessions</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to import sessions? This will add to your existing sessions.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction asChild>
-                <label className="cursor-pointer">
-                  Import
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportSessions}
-                    className="hidden"
-                  />
-                </label>
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button variant="outline" onClick={handleImportDialogOpen}>Import Sessions</Button>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {sessions.map((session) => (
@@ -159,6 +161,29 @@ const SessionList = () => {
           </Card>
         ))}
       </div>
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Import Sessions</DialogTitle>
+            <DialogDescription>
+              Select a JSON file to import sessions. This will add to your existing sessions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid w-full max-w-sm items-center gap-1.5">
+            <Label htmlFor="importFile">Session File</Label>
+            <Input id="importFile" type="file" accept=".json" onChange={handleFileSelect} />
+          </div>
+          {importedSessions.length > 0 && (
+            <p>{importedSessions.length} sessions found in the file</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={handleImportDialogClose}>Cancel</Button>
+            <Button onClick={handleImportConfirm} disabled={importedSessions.length === 0}>
+              Import {importedSessions.length} Sessions
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
