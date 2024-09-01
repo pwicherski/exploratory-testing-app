@@ -9,6 +9,7 @@ export default defineConfig({
     host: "::",
     port: "8080",
   },
+  base: '/exploratory-testing-app/',
   plugins: [react()],
   resolve: {
     alias: [
