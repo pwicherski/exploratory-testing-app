@@ -10,7 +10,7 @@ const App = () => {
     <React.StrictMode>
       <TooltipProvider>
         <Toaster />
-        <BrowserRouter>
+        <HashRouter>
           <Routes>
             <Route path="/" element={<SessionList />} />
             <Route path="/notes" element={<NoteTakingApp />} />
