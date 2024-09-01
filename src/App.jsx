@@ -1,6 +1,6 @@
 import React from 'react';
 import { Toaster } from "sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import SessionList from "./components/SessionList";
 import NoteTakingApp from "./pages/NoteTakingApp";
