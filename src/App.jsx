@@ -15,7 +15,7 @@ const App = () => {
             <Route path="/" element={<SessionList />} />
             <Route path="/notes" element={<NoteTakingApp />} />
           </Routes>
-        </BrowserRouter>
+        </HashRouter>
       </TooltipProvider>
     </React.StrictMode>
   );
