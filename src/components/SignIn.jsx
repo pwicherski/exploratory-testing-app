@@ -17,7 +17,7 @@ const SignIn = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="p-8 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold mb-4">Welcome to Note Scribe Sessions</h1>
+        <h1 className="text-2xl font-bold mb-4">Welcome to Exploratory Testing App</h1>
         <Button onClick={() => login()} className="w-full">
           Sign in with Google
         </Button>

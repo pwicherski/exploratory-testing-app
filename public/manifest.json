@@ -1,6 +1,6 @@
 {
-  "short_name": "NoteTaker",
-  "name": "Note Scribe Sessions",
+  "short_name": "ExploreTester",
+  "name": "Exploratory Testing App",
   "icons": [
     {
       "src": "favicon.ico",
