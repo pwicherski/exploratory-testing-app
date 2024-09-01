@@ -6,13 +6,14 @@
     <title>Exploratory Testing App</title>
     <meta name="description" content="An app for managing exploratory testing sessions" />
     <meta name="author" content="GPT Engineer" />
-    <meta property="og:image" content="./og-image.svg" />
-    <link rel="manifest" href="./manifest.json" />
+    <meta property="og:image" content="%PUBLIC_URL%/og-image.svg" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <meta name="theme-color" content="#000000" />
+    <base href="%PUBLIC_URL%/">
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./src/main.jsx"></script>
+    <script type="module" src="src/main.jsx"></script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
   </body>
 </html>
