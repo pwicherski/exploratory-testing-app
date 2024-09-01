@@ -1,5 +1,5 @@
 import React from 'react';
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import SessionList from "./components/SessionList";
