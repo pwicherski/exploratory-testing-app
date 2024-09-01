@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import SessionList from "./components/SessionList";
 import NoteTakingApp from "./pages/NoteTakingApp";
+import Index from "./pages/Index";
 
 const App = () => {
   return (
@@ -12,7 +13,8 @@ const App = () => {
         <Toaster />
         <HashRouter>
           <Routes>
-            <Route path="/" element={<SessionList />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/sessions" element={<SessionList />} />
             <Route path="/notes" element={<NoteTakingApp />} />
           </Routes>
         </HashRouter>
