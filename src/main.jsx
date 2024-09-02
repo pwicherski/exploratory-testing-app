@@ -37,10 +37,10 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Error handling for module loading
+// Error handling for script loading
 window.addEventListener('error', (event) => {
   if (event.message.includes('Loading module') || event.message.includes('Loading failed for the module')) {
-    console.error('Module loading error:', event.message);
+    console.error('Script loading error:', event.message);
     // You can add additional error handling or user notification here
   }
 });
