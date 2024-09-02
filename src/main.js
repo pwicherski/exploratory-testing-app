@@ -1,5 +1,5 @@
-import React from 'react';
-import ReactDOM from "react-dom/client";
+import React from './node_modules/react/umd/react.development.js';
+import ReactDOM from './node_modules/react-dom/umd/react-dom.development.js';
 import App from "./App.js";
 import "./index.css";
 
