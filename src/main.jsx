@@ -4,13 +4,17 @@ import App from "./App.jsx";
 import "./index.css";
 
 const renderApp = () => {
-  const root = ReactDOM.createRoot(document.getElementById("root"));
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-  console.log('React app has finished rendering');
+  try {
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+    console.log('React app has finished rendering');
+  } catch (error) {
+    console.error('Error rendering React app:', error);
+  }
 };
 
 // Ensure the DOM is fully loaded before rendering
@@ -32,3 +36,11 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+
+// Error handling for module loading
+window.addEventListener('error', (event) => {
+  if (event.message.includes('Loading module') || event.message.includes('Loading failed for the module')) {
+    console.error('Module loading error:', event.message);
+    // You can add additional error handling or user notification here
+  }
+});
